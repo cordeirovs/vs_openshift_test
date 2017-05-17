@@ -1,82 +1,65 @@
+![docker hub](https://img.shields.io/docker/pulls/richarvey/nginx-php-fpm.svg?style=flat-square)
+![docker hub](https://img.shields.io/docker/stars/richarvey/nginx-php-fpm.svg?style=flat-square)
+![Travis](https://img.shields.io/travis/ngineered/nginx-php-fpm.svg?style=flat-square)
 
-# Creating a basic S2I builder image  
+## Overview
+This is a Dockerfile/image to build a container for nginx and php-fpm, with the ability to pull website code from git when the container is created, as well as allowing the container to push and pull changes to the code to and from git. The container also has the ability to update templated files with variables passed to docker in order to update your code and settings. There is support for lets encrypt SSL configurations, custom nginx configs, core nginx/PHP variable overrides for running preferences, X-Forwarded-For headers and UID mapping for local volume support.
 
-## Getting started  
+If you have improvements or suggestions please open an issue or pull request on the GitHub project page.
 
-### Files and Directories  
-| File                   | Required? | Description                                                  |
-|------------------------|-----------|--------------------------------------------------------------|
-| Dockerfile             | Yes       | Defines the base builder image                               |
-| s2i/bin/assemble       | Yes       | Script that builds the application                           |
-| s2i/bin/usage          | No        | Script that prints the usage of the builder                  |
-| s2i/bin/run            | Yes       | Script that runs the application                             |
-| s2i/bin/save-artifacts | No        | Script for incremental builds that saves the built artifacts |
-| test/run               | No        | Test script for the builder image                            |
-| test/test-app          | Yes       | Test application source code                                 |
+### Versioning
+| Docker Tag | GitHub Release | Nginx Version | PHP Version | Alpine Version |
+|-----|-------|-----|--------|--------|
+| latest | Master Branch |1.12.0 | 7.1.3 | 3.4 |
 
-#### Dockerfile
-Create a *Dockerfile* that installs all of the necessary tools and libraries that are needed to build and run our application.  This file will also handle copying the s2i scripts into the created image.
+For other tags please see: [versioning](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/versioning.md)
 
-#### S2I scripts
+### Links
+- [https://github.com/ngineered/nginx-php-fpm](https://github.com/ngineered/nginx-php-fpm)
+- [https://registry.hub.docker.com/u/richarvey/nginx-php-fpm/](https://registry.hub.docker.com/u/richarvey/nginx-php-fpm/)
 
-##### assemble
-Create an *assemble* script that will build our application, e.g.:
-- build python modules
-- bundle install ruby gems
-- setup application specific configuration
-
-The script can also specify a way to restore any saved artifacts from the previous image.   
-
-##### run
-Create a *run* script that will start the application. 
-
-##### save-artifacts (optional)
-Create a *save-artifacts* script which allows a new build to reuse content from a previous version of the application image.
-
-##### usage (optional) 
-Create a *usage* script that will print out instructions on how to use the image.
-
-##### Make the scripts executable 
-Make sure that all of the scripts are executable by running *chmod +x s2i/bin/**
-
-#### Create the builder image
-The following command will create a builder image named nginx-centos7 based on the Dockerfile that was created previously.
+## Quick Start
+To pull from docker hub:
 ```
-docker build -t nginx-centos7 .
+docker pull richarvey/nginx-php-fpm:latest
 ```
-The builder image can also be created by using the *make* command since a *Makefile* is included.
+### Running
+To simply run the container:
+```
+sudo docker run -d richarvey/nginx-php-fpm
+```
+To dynamically pull code from git when starting:
+```
+docker run -d -e 'GIT_EMAIL=email_address' -e 'GIT_NAME=full_name' -e 'GIT_USERNAME=git_username' -e 'GIT_REPO=github.com/project' -e 'GIT_PERSONAL_TOKEN=<long_token_string_here>' richarvey/nginx-php-fpm:latest
+```
 
-Once image has finished building, the command *s2i usage nginx-centos7* will print out the help info that was defined in the *usage* script.
+You can then browse to ```http://<DOCKER_HOST>``` to view the default install files. To find your ```DOCKER_HOST``` use the ```docker inspect``` to get the IP address (normally 172.17.0.2)
 
-#### Testing the builder image
-The builder image can be tested using the following commands:
-```
-docker build -t nginx-centos7-candidate .
-IMAGE_NAME=nginx-centos7-candidate test/run
-```
-The builder image can also be tested by using the *make test* command since a *Makefile* is included.
+For more detailed examples and explanations please refer to the documentation.
+## Documentation
 
-#### Creating the application image
-The application image combines the builder image with your applications source code, which is served using whatever application is installed via the *Dockerfile*, compiled using the *assemble* script, and run using the *run* script.
-The following command will create the application image:
-```
-s2i build test/test-app nginx-centos7 nginx-centos7-app
----> Building and installing application from source...
-```
-Using the logic defined in the *assemble* script, s2i will now create an application image using the builder image as a base and including the source code from the test/test-app directory. 
+- [Building from source](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/building.md)
+- [Versioning](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/versioning.md)
+- [Config Flags](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/config_flags.md)
+- [Git Auth](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/git_auth.md)
+ - [Personal Access token](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/git_auth.md#personal-access-token)
+ - [SSH Keys](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/git_auth.md#ssh-keys)
+- [Git Commands](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/git_commands.md)
+ - [Push](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/git_commands.md#push-code-to-git)
+ - [Pull](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/git_commands.md#pull-code-from-git-refresh)
+- [Repository layout / webroot](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/repo_layout.md)
+ - [webroot](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/repo_layout.md#src--webroot)
+- [User / Group Identifiers](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/UID_GID_Mapping.md)
+- [Custom Nginx Config files](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/nginx_configs.md)
+ - [REAL IP / X-Forwarded-For Headers](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/nginx_configs.md#real-ip--x-forwarded-for-headers)
+- [Scripting and Templating](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/scripting_templating.md)
+ - [Environment Variables](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/scripting_templating.md#using-environment-variables--templating)
+- [Lets Encrypt Support](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/lets_encrypt.md)
+ - [Setup](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/lets_encrypt.md#setup)
+ - [Renewal](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/lets_encrypt.md#renewal)
+- [PHP Modules](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/php_modules.md)
+- [Logging and Errors](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/logs.md)
 
-#### Running the application image
-Running the application image is as simple as invoking the docker run command:
-```
-docker run -d -p 8080:8080 nginx-centos7-app
-```
-The application, which consists of a simple static web page, should now be accessible at  [http://localhost:8080](http://localhost:8080).
-
-#### Using the saved artifacts script
-Rebuilding the application using the saved artifacts can be accomplished using the following command:
-```
-s2i build --incremental=true test/test-app nginx-centos7 nginx-app
----> Restoring build artifacts...
----> Building and installing application from source...
-```
-This will run the *save-artifacts* script which includes the custom code to backup the currently running application source, rebuild the application image, and then re-deploy the previously saved source using the *assemble* script.
+## Guides
+- [Running in Kubernetes](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/guides/kubernetes.md)
+- [Using Docker Compose](https://github.com/ngineered/nginx-php-fpm/blob/master/docs/guides/docker_compose.md)
